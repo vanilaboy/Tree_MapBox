@@ -1,0 +1,241 @@
+<html>
+    <head>
+        <title>TreeMap - Map</title>
+        <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+        <link rel="stylesheet" type="text/css" href="../style.css">
+        <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,400i,700" rel="stylesheet">
+        <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.49.0/mapbox-gl.js'></script>
+        <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.49.0/mapbox-gl.css' rel='stylesheet'/>
+    </head>
+    <body>
+        <div class="container" id="mappage">
+            <div class="navbar">
+                <img src="../img/logo.png" alt="TreeMap logo"><span>TREEMAP</span>
+                <ul class="menu">
+                    <li><a href="/">HOME</a></li>
+                    <li><a href="#">SERVICES</a></li>
+                    <li><a href="#">CONTACT US</a></li>
+                    <li><a href="/login">LOG IN OR REGISTER</a></li>
+                </ul>
+            </div>
+            <pre id='features'></pre>
+            <div class="map">
+                <div class="sidecolumn">
+
+                    <div class="infoAboutTree" style="display: none;">
+                        <input class="sidecolumn__species" value="Here should be the species name"/>
+                        <input class="sidecolumn__scientific" value="Here should be the scientific name"/>
+                        <input class="sidecolumn__title" value="Here should be the title"/>
+                        <input class="sidecolumn__description" value="Here should be the description"/>
+                        <div class="sidecolumn__geometry">
+                            <img class="sidecolumn__leaf" src="../img/leaf.png" alt="leaf">
+                            <div class="sidecolumn__data">
+                                <p class="sidecolumn__id">ID number: <span class="sidecolumn__id-value">if possible</span></p>
+                                <p class="sidecolumn__diameter">Trunk Diameter: <input id="info"class="sidecolumn__diameter-value" value="here goes the value"/>
+                                <p class="sidecolumn__longitude">Longitude: <input class="sidecolumn__lng-value" value="if possible"/>
+                                <p class="sidecolumn__latitude">Latitude: <input class="sidecolumn__lat-value" value="if possible"/>
+                            </div>
+                        </div>
+                        <p id="deleteButton"> </p>
+                        <p id="updateButton"> </p>
+                    </div>
+
+                    <div class="someClass" id="addNewTree" style="display: none;">
+                        <form>
+                            <div class="someClass">
+                                Longitude
+                            </div>
+                            <input name="latitude" placeholder=" Latitude..." class="inputLatitude" required>
+                            <div class="someClass">
+                                Latitude
+                            </div>
+                            <input name="longitude" placeholder=" Longitude..." class="inputLongitude" required>
+                            <div class="someClass">
+                                Title
+                            </div>
+                            <input name="title" placeholder=" Title..." class="inputTitle" required>
+                            <div class="someClass">
+                                Description
+                            </div>
+                            <input name="description" placeholder=" Description..." class="inputDescription" required>
+                            <div class="someClass">
+                                Trunk diameter
+                            </div>
+                            <input name="trunkDiameter" placeholder=" Diameter..." class="inputDescription" required>
+                            <div class="someClass">
+                                Species name
+                            </div>
+                            <input name="speciesName" placeholder=" Name..." class="inputDescription" required>
+                            <div class="someClass">
+                                Scientific species name
+                            </div>
+                            <input name="scientificSpeciesName" placeholder=" Scientific name..." class="inputDescription" required>
+                        </form>
+                        <button class="button" onclick="addNew()">Add dot</button>
+                    </div>
+                </div>
+                <div id="map">
+                </div>
+            </div>
+            <script>
+            mapboxgl.accessToken = 'pk.eyJ1IjoicmVtbWFyazk5OSIsImEiOiJjam1ocTJ1MW4yZjZhM3ZsaDBwYXRxd3FuIn0.hAlMGVhoN6VT38mDK1g8SA';
+            const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/remmark999/cjmt3581j1irt2smiaye361la',
+            center: [-87.661557, 41.893748],
+            zoom: 10.7
+            });
+            map.on('click', function(e) {
+            var features = map.queryRenderedFeatures(e.point, {
+            layers: ['chicago-parks'] // replace this with the name of the layer
+            });
+            if (!features.length) {
+            return;
+            }
+            var feature = features[0];
+        //     var popup = new mapboxgl.Popup({ offset: [0, -15] })
+        //     .setLngLat(feature.geometry.coordinates)
+        //     .setHTML('<div><input name="newTitle" value="' + feature.properties.title
+        //     + '"></div>' + '<div><input name="newDescription" value="'
+        //     + feature.properties.description +
+        // '"></div><button class="button" onclick="deleteFeature(\''
+        // + feature.properties.description.toString().replace("\'", "\\\'") +
+        // '\',\'' + feature.properties.title.toString().replace("\'", "\\\'") + '\'' + ',' +
+        // ')">Delete</button><button class="button" onclick="updateFeature('
+        // + '\'' + feature.properties.description.toString().replace("\'", "\\\'") + '\','
+        // + '\'' + feature.properties.title.toString().replace("\'", "\\\'") + '\','
+        // + ')">Save</button>')
+        // .setLngLat(feature.geometry.coordinates)
+        // .addTo(map);
+        });
+        map.on('click', function (e) {
+            //prepare
+            document.getElementsByClassName("infoAboutTree")[0].style.display = "none";
+            document.getElementById("addNewTree").style.display = "block";
+            document.getElementsByName("latitude")[0].value = e.lngLat.lng;
+            document.getElementsByName("longitude")[0].value = e.lngLat.lat;
+
+
+            //render
+            let feature = map.queryRenderedFeatures(e.point);
+
+            //parse JSON
+            if (feature[0].type === "Feature" && feature[0].geometry.type === "Point"
+                && feature[0].properties["title"] !== undefined && feature[0].properties["description"] !== undefined) {
+                document.getElementsByClassName("infoAboutTree")[0].style.display = "block";
+                document.getElementById("addNewTree").style.display = "none";
+
+                let speciesName = feature[0].properties["species name"]; if (speciesName === undefined) {speciesName = ''}
+                let scientificName = feature[0].properties["scientific species name"]; if (scientificName === undefined) {scientificName = ''}
+                let title = feature[0].properties["title"]; if (title === undefined) {title = ''}
+                let description = feature[0].properties["description"]; if (description === undefined) {description = ''}
+                let trunkDiameter = feature[0].properties["trunk diameter"]; if (trunkDiameter === undefined) {trunkDiameter = ''}
+                let longitude = feature[0].geometry.coordinates[0].toString(); if (longitude === undefined) {longitude = ''}
+                let latitude = feature[0].geometry.coordinates[1].toString(); if (latitude === undefined) {latitude = ''}
+
+                document.getElementsByClassName("sidecolumn__species")[0].value = speciesName;
+                document.getElementsByClassName("sidecolumn__scientific")[0].value = scientificName;
+                document.getElementsByClassName("sidecolumn__title")[0].value = title;
+                document.getElementsByClassName("sidecolumn__description")[0].value = description;
+                document.getElementsByClassName("sidecolumn__id-value")[0].innerHTML = feature[0].id.toString();
+                document.getElementsByClassName("sidecolumn__diameter-value")[0].value = trunkDiameter;
+                document.getElementsByClassName("sidecolumn__lng-value")[0].value = longitude;
+                document.getElementsByClassName("sidecolumn__lat-value")[0].value = latitude;
+
+                document.getElementById("deleteButton").innerHTML = '<button class=\"button\" onclick=\"deleteFeature('
+                    + '\'' + feature[0].properties["description"].toString().replace("\'", "\\\'") + '\','
+                    + '\'' + feature[0].properties["title"].toString().replace("\'", "\\\'") + '\''
+                    +  ')">DELETE</button>';
+
+                document.getElementById("updateButton").innerHTML = '<button class=\"button\" onclick=\"updateFeature('
+                    + '\'' + speciesName.replace("\'", "\\\'") + '\','
+                    + '\'' + scientificName.toString().replace("\'", "\\\'") + '\','
+                    + '\'' + title.toString().replace("\'", "\\\'") + '\','
+                    + '\'' + description.toString().replace("\'", "\\\'") + '\','
+                    + '\'' + trunkDiameter.toString().replace("\'", "\\\'") + '\','
+                    + '\'' + longitude.toString().replace("\'", "\\\'") + '\','
+                    + '\'' + latitude.toString().replace("\'", "\\\'") + '\''
+                    + ')">UPDATE</button>';
+
+
+            } else {
+
+            }
+        });
+        
+        function addNew() {
+        let xhr = new XMLHttpRequest();
+        let body = 'latitude=' + encodeURIComponent(document.getElementsByName("latitude")[0].value) +
+        '&longitude=' + encodeURIComponent(document.getElementsByName("longitude")[0].value) +
+        '&title=' + encodeURIComponent(document.getElementsByName("title")[0].value) +
+        '&description=' + encodeURIComponent(document.getElementsByName("description")[0].value) +
+        '&trunk diameter=' + encodeURIComponent(document.getElementsByName("trunkDiameter")[0].value) +
+        '&species name=' + encodeURIComponent(document.getElementsByName("speciesName")[0].value) +
+        '&scientific species name=' + encodeURIComponent(document.getElementsByName("scientificSpeciesName")[0].value) +
+        '&action=' + encodeURIComponent("add");
+        xhr.open("POST", '/map', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onreadystatechange = function () {
+        if(xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+        // do something
+        }
+        };
+        xhr.send(body);
+        location.reload();
+        }
+        function deleteFeature(description, title) {
+        let xhr = new XMLHttpRequest();
+        let body = 'description=' + encodeURIComponent(description.toString()) +
+        '&title=' + encodeURIComponent(title.toString()) +
+        '&action=' + encodeURIComponent("delete");
+        xhr.open("POST", '/map', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
+        xhr.onreadystatechange = function () {
+        if(xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+        // do something
+        }
+        };
+        xhr.send(body);
+        location.reload();
+        }
+        function updateFeature(speciesName, scientificName, title, description, diameter, longitude, latitude) {
+
+            let newSpeciesName = document.getElementsByClassName("sidecolumn__species")[0].value;
+            let newScientificName = document.getElementsByClassName("sidecolumn__scientific")[0].value;
+            let newTitle = document.getElementsByClassName("sidecolumn__title")[0].value;
+            let newDescription = document.getElementsByClassName("sidecolumn__description")[0].value;
+            let newDiameter = document.getElementsByClassName("sidecolumn__diameter-value")[0].value;
+            let newLongitude = document.getElementsByClassName("sidecolumn__lng-value")[0].value;
+            let newLatitude = document.getElementsByClassName("sidecolumn__lat-value")[0].value;
+
+            if(newSpeciesName !== speciesName || newScientificName !== scientificName || newTitle !== title
+                || newDescription !== description || newDiameter !== diameter || newLongitude !== longitude
+                || newLatitude !== latitude) {
+                let xhr = new XMLHttpRequest();
+                let body = 'description=' + encodeURIComponent(description.toString()) +
+                    '&title=' + encodeURIComponent(title.toString()) +
+                    '&newTitle=' + encodeURIComponent(newTitle.toString()) +
+                    '&newDescription=' + encodeURIComponent(newDescription.toString()) +
+                    '&species name=' + encodeURIComponent(newSpeciesName.toString()) +
+                    '&scientific species name=' + encodeURIComponent(newScientificName.toString()) +
+                    '&trunk diameter=' + encodeURIComponent(newDiameter.toString()) +
+                    '&longitude=' + encodeURIComponent(newLongitude.toString()) +
+                    '&latitude=' + encodeURIComponent(newLatitude.toString()) +
+                    '&action=' + encodeURIComponent("update");
+
+                xhr.open("POST", '/map', true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
+                xhr.onreadystatechange = function () {
+                    if(xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                        // do something
+                    }
+                };
+                xhr.send(body);
+                location.reload();
+            } //else do nothing
+        }
+        
+        </script>
+    </div>
+</body>
+</html>
